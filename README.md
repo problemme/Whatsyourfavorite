@@ -1,0 +1,2 @@
+# Whatsyourfavorite
+为无法科学上网的同人女提供最新最美味的中文版Fanfics（我调用了Google翻译，这让文章变得通俗易懂）
