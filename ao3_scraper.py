@@ -1,3 +1,5 @@
+# ao3_scraper.py
+
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import quote
@@ -47,6 +49,7 @@ class AO3Scraper:
                 raise Exception(f"请求失败：HTTP {response.status_code}")
             text_list.append(response.text)
         return self._parse_search_results(text_list)
+    
 #解析爬取的结果
     def _parse_search_results(self, html_list: list[str]):#okay我们可以记住这个表达
         results = []
@@ -55,18 +58,27 @@ class AO3Scraper:
         #获取所有作品的列表    
         work_items = soup.find_all("li", class_="work blurb group")#返回所有作品的列表
         #循环以获得作品的名称、作者、tag和时间
+        
         for item in work_items:
             div_header = item.find("div", class_="header module")
             header_module = div_header.find("h4", class_="heading").find("a")
+            #获取标题
             name = header_module.get_text(strip=True)
             name_url = "https://archiveofourown.org" + header_module["href"]
+            #获取作者
             author = header_module[1].get_text(strip=True)
             author_url = "https://archiveofourown.org" + header_module[1]["href"]
             ul_tags = item.find("ul", class_="tags commas")#class_防止和类的定义混淆
-            tags = {}
             for li in ul_tags.find_all("li"):
                 a_tag = li.find("a",class_ = "tag")
                 if a_tag:
                     tag_text = a_tag.get_text(strip=True)
                     tag_url = "https://archiveofourown.org" + a_tag["href"]
-                    tags[tag_text] = tag_url#字典构造规则
+            work_info = {
+                "title":{"text":name,"url":name_url},
+                "author":{"text":author,"url":author_url},
+                "tags":{"text":tag_text,"url":tag_url}
+            }
+            results.append(work_info)
+        return results
+            
