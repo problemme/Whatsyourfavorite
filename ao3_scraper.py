@@ -1,11 +1,14 @@
 import requests
+import time
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 from bs4 import BeautifulSoup
 from urllib.parse import quote
 
 class AO3Scraper:
     def __init__(self):
+        self.session = requests.Session() #复用同一个TCP连接
         self.session_cookie = 'eyJfcmFpbHMiOnsibWVzc2FnZSI6ImV5SnpaWE56YVc5dVgybGtJam9pTXpFek5tWmxaakZrTm1GbU9ERTNabUV4TW1aaVpqZzRPVEJqTTJVeE56RWlMQ0ozWVhKa1pXNHVkWE5sY2k1MWMyVnlMbXRsZVNJNlcxc3lNelV6TmpneE0xMHNJaVF5WVNReE5DUkJaekYxUlRKTE1HbHpVVUUxZGxKTVEyMXhPRGRsSWwwc0luSmxkSFZ5Ymw5MGJ5STZJaTkxYzJWeWN5OVVhR1ZrYjNOcFlTSXNJbDlqYzNKbVgzUnZhMlZ1SWpvaWVuUk5iRGw2TlY5YWJESXpOWFI1YmtWcmExazRhM0EzYjBwalVteFJSV2xKTXpVeE5GQmhYMGxLY3lKOSIsImV4cCI6IjIwMjUtMDgtMjNUMDU6MzM6MzguMzgxWiIsInB1ciI6ImNvb2tpZS5fb3R3YXJjaGl2ZV9zZXNzaW9uIn19--2d22e0e5ce95447bc994873910afb3f652597617'
-
         self.base_url = "https://archiveofourown.org"
         self.headers = {
             "User-Agent": (
@@ -14,6 +17,12 @@ class AO3Scraper:
                 "Chrome/116.0.0.0 Safari/537.36"
             )
         }
+        retries = Retry(
+                        total=5,                # 最多重试 5 次
+                        backoff_factor=1,       # 每次重试间隔逐渐加长：1s, 2s, 4s...
+                        status_forcelist=[500, 502, 503, 504]  # 遇到这些错误才重试
+                    )
+        self.session.mount("https://", HTTPAdapter(max_retries=retries))
         self.cookies = {
             "_otwarchive_session": self.session_cookie
         }
@@ -96,7 +105,8 @@ def main():
     scraper = AO3Scraper()
     html = f"https://archiveofourown.org/works/search?work_search%5Bquery%5D={encoded_query}"
     #得到最大页数
-    response = requests.get(html, headers=scraper.headers, cookies=scraper.cookies)
+    time.sleep(2)
+    response = scraper.session.get(html, headers=scraper.headers, cookies=scraper.cookies,timeout=10)
     scraper.max_num = scraper.get_all_pages(response.text)
     if scraper.max_num > 1:
         scraper.search(query)
