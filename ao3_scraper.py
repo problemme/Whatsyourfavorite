@@ -53,7 +53,7 @@ class AO3Scraper:
             f"{self.base_url}/works/search?page={page}"
             f"&work_search%5Bquery%5D={encoded_query}"
         )
-            response = requests.get(self.search_url, headers=self.headers, cookies=self.cookies)
+            response = self.session.get(self.search_url, headers=self.headers, cookies=self.cookies)
             #抛出异常值
             if response.status_code != 200:
                 raise Exception(f"请求失败：HTTP {response.status_code}")
@@ -98,6 +98,7 @@ class AO3Scraper:
         return results
     
 def main():
+
     #用户输入产品名称
     query = input("Whatsyourfavorite:")
     encoded_query = quote(query)
@@ -105,13 +106,14 @@ def main():
     scraper = AO3Scraper()
     html = f"https://archiveofourown.org/works/search?work_search%5Bquery%5D={encoded_query}"
     #得到最大页数
-    time.sleep(2)
+    time.sleep(10)
     response = scraper.session.get(html, headers=scraper.headers, cookies=scraper.cookies,timeout=10)
     scraper.max_num = scraper.get_all_pages(response.text)
     if scraper.max_num > 1:
         scraper.search(query)
     else:
-        scraper._parse_search_results(html)
+        scraper._parse_search_results([html])
+    
 
 if __name__ == "__main__":
     main()
