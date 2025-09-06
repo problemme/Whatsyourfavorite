@@ -1,36 +1,18 @@
-import requests
-import time
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
+from playwright.sync_api import sync_playwright
 from bs4 import BeautifulSoup
 from urllib.parse import quote
+import time
 
 class AO3Scraper:
     def __init__(self):
-        self.session = requests.Session() #复用同一个TCP连接
         self.session_cookie = 'eyJfcmFpbHMiOnsibWVzc2FnZSI6ImV5SnpaWE56YVc5dVgybGtJam9pTXpFek5tWmxaakZrTm1GbU9ERTNabUV4TW1aaVpqZzRPVEJqTTJVeE56RWlMQ0ozWVhKa1pXNHVkWE5sY2k1MWMyVnlMbXRsZVNJNlcxc3lNelV6TmpneE0xMHNJaVF5WVNReE5DUkJaekYxUlRKTE1HbHpVVUUxZGxKTVEyMXhPRGRsSWwwc0luSmxkSFZ5Ymw5MGJ5STZJaTkxYzJWeWN5OVVhR1ZrYjNOcFlTSXNJbDlqYzNKbVgzUnZhMlZ1SWpvaWVuUk5iRGw2TlY5YWJESXpOWFI1YmtWcmExazRhM0EzYjBwalVteFJSV2xKTXpVeE5GQmhYMGxLY3lKOSIsImV4cCI6IjIwMjUtMDgtMjNUMDU6MzM6MzguMzgxWiIsInB1ciI6ImNvb2tpZS5fb3R3YXJjaGl2ZV9zZXNzaW9uIn19--2d22e0e5ce95447bc994873910afb3f652597617'
         self.base_url = "https://archiveofourown.org"
-        self.headers = {
-            "User-Agent": (
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/116.0.0.0 Safari/537.36"
-            )
-        }
-        retries = Retry(
-                        total=5,                # 最多重试 5 次
-                        backoff_factor=1,       # 每次重试间隔逐渐加长：1s, 2s, 4s...
-                        status_forcelist=[500, 502, 503, 504]  # 遇到这些错误才重试
-                    )
-        self.session.mount("https://", HTTPAdapter(max_retries=retries))
-        self.cookies = {
-            "_otwarchive_session": self.session_cookie
-        }
-#获取最大页数的值
+        self.results = []
+#获取最大页数的值(可获取)
     def get_all_pages(self,html):
-        soup = BeautifulSoup(html, "html.parser")
+        soup = BeautifulSoup(html, "lxml")
         #找到索引
-        pagination = soup.select_one("ol.pagination.actions")
+        pagination = soup.select_one("ol.pagination")#这是CSS选择器的写法
         pages = []
         for li in pagination.find_all("a"):
             text = li.get_text(strip=True)
@@ -38,31 +20,11 @@ class AO3Scraper:
                 pages.append(int(text))
             except ValueError:
                 continue
-        self.max_num = max(pages) if pages else 1
-        
+        self.max_num = max(pages) if pages else 1        
         return self.max_num
-    
-#对目标cp进行搜索        
-    def search(self, query: str):
-        #quote对字符串进行URL编码，query是cp关键词
-        encoded_query = quote(query)
-        text_list = []
-        #爬取所有页面的信息
-        for page in range(1, self.max_num+1):
-            self.search_url = (
-            f"{self.base_url}/works/search?page={page}"
-            f"&work_search%5Bquery%5D={encoded_query}"
-        )
-            response = self.session.get(self.search_url, headers=self.headers, cookies=self.cookies)
-            #抛出异常值
-            if response.status_code != 200:
-                raise Exception(f"请求失败：HTTP {response.status_code}")
-            text_list.append(response.text)
-        return self._parse_search_results(text_list)
-    
+
 #解析爬取的结果
     def _parse_search_results(self, html_list: list[str]):#okay我们可以记住这个表达
-        results = []
         #外循环所有页码
         for html in html_list:
             soup = BeautifulSoup(html, "html.parser")
@@ -94,8 +56,8 @@ class AO3Scraper:
                     "author":{"text":author,"url":author_url},
                     "tags":tags
                 }
-                results.append(work_info)
-        return results
+                self.results.append(work_info)
+        return self.results
     
 def main():
 
@@ -104,16 +66,37 @@ def main():
     encoded_query = quote(query)
     #从我的账户进行爬取
     scraper = AO3Scraper()
-    html = f"https://archiveofourown.org/works/search?work_search%5Bquery%5D={encoded_query}"
-    #得到最大页数
-    time.sleep(10)
-    response = scraper.session.get(html, headers=scraper.headers, cookies=scraper.cookies,timeout=10)
-    scraper.max_num = scraper.get_all_pages(response.text)
-    if scraper.max_num > 1:
-        scraper.search(query)
-    else:
-        scraper._parse_search_results([html])
-    
+    url = f"https://archiveofourown.org/works/search?work_search%5Bquery%5D={encoded_query}"#搜索目标网址
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)#加载谷歌浏览器
+        context = browser.new_context()#类似于点击新建标签页
+        context.add_cookies([{
+            "name": "_otwarchive_session",   # AO3 的 cookie 名
+            "value": "eyJfcmFpbHMiOnsibWVzc2FnZSI6ImV5SnpaWE56YVc5dVgybGtJam9pTXpFek5tWmxaakZrTm1GbU9ERTNabUV4TW1aaVpqZzRPVEJqTTJVeE56RWlMQ0ozWVhKa1pXNHVkWE5sY2k1MWMyVnlMbXRsZVNJNlcxc3lNelV6TmpneE0xMHNJaVF5WVNReE5DUkJaekYxUlRKTE1HbHpVVUUxZGxKTVEyMXhPRGRsSWwwc0luSmxkSFZ5Ymw5MGJ5STZJaTkxYzJWeWN5OVVhR1ZrYjNOcFlTSXNJbDlqYzNKbVgzUnZhMlZ1SWpvaWVuUk5iRGw2TlY5YWJESXpOWFI1YmtWcmExazRhM0EzYjBwalVteFJSV2xKTXpVeE5GQmhYMGxLY3lKOSIsImV4cCI6IjIwMjUtMDgtMjNUMDU6MzM6MzguMzgxWiIsInB1ciI6ImNvb2tpZS5fb3R3YXJjaGl2ZV9zZXNzaW9uIn19--2d22e0e5ce95447bc994873910afb3f652597617", 
+            "domain": "archiveofourown.org",#写搜索网站的裸域名
+            "path": "/"
+        }])
+        page = context.new_page()#打开了一页新的谷歌浏览页
+        page.goto(url,wait_until = "domcontentloaded",timeout=60000)#跳转到搜索后的页面
+        html = page.content()#获取对应网页渲染后的HTML
+        #得到最大页数
+        scraper.max_num = scraper.get_all_pages(html)
+        html_list = []
+        for i in range(1, scraper.max_num+1):
+            search_url = (
+            f"{scraper.base_url}/works/search?page={i}"
+            f"&work_search%5Bquery%5D={encoded_query}"
+        )
+            try:
+                page.goto(search_url, wait_until = "domcontentloaded",timeout=60000)
+                html_value = page.content()
+                html_list.append(html_value)
+            except Exception as e:
+                print(f"Page {i} failed.")
+                break
+            time.sleep(5)
+        scraper._parse_search_results(html_list)
+    print(scraper.results)
 
 if __name__ == "__main__":
     main()
