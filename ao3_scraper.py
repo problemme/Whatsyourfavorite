@@ -25,12 +25,13 @@ class AO3Scraper:
 
 #解析爬取的结果
     def _parse_search_results(self, html_list: list[str]):#okay我们可以记住这个表达
-        #外循环所有页码
+        # 外循环所有页码
         for html in html_list:
-            soup = BeautifulSoup(html, "html.parser")
-        #获取该页码所有作品的列表    
-            work_items = soup.find_all("li", class_="work blurb group")#返回所有作品的列表
-        #循环以获得作品的名称、作者、tag和时间
+            soup = BeautifulSoup(html, "lxml")
+        # 获取该页码所有作品的列表    
+            work_items = soup.select("li.work.blurb.group")
+            print(work_items)
+        # 循环以获得作品的名称、作者、tag和时间
             for item in work_items:
                 div_header = item.find("div", class_="header module")
                 header_module = div_header.find("h4", class_="heading")
@@ -57,6 +58,7 @@ class AO3Scraper:
                     "tags":tags
                 }
                 self.results.append(work_info)
+                break
         return self.results
     
 def main():
@@ -93,8 +95,7 @@ def main():
                 html_list.append(html_value)
             except Exception as e:
                 print(f"Page {i} failed.")
-                break
-            time.sleep(5)
+            break
         scraper._parse_search_results(html_list)
     print(scraper.results)
 
