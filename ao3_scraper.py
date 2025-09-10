@@ -40,7 +40,7 @@ class AO3Scraper:
                 name = title_tag.get_text(strip=True)
                 name_url = self.base_url + title_tag["href"]
                 #获取作者
-                author_tag = header_module.find("a", class_="author")
+                author_tag = header_module.find("a", rel="author")
                 author = author_tag.get_text(strip=True)
                 author_url = self.base_url + author_tag["href"]
                 tags = []
