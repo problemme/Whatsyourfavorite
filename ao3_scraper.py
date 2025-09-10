@@ -1,7 +1,6 @@
 from playwright.sync_api import sync_playwright
 from bs4 import BeautifulSoup
 from urllib.parse import quote
-import time
 
 class AO3Scraper:
     def __init__(self):
@@ -24,42 +23,41 @@ class AO3Scraper:
         return self.max_num
 
 #解析爬取的结果
-    def _parse_search_results(self, html_list: list[str]):#okay我们可以记住这个表达
-        # 外循环所有页码
-        for html in html_list:
-            soup = BeautifulSoup(html, "lxml")
-        # 获取该页码所有作品的列表    
-            work_items = soup.select("li.work.blurb.group")
-            print(work_items)
-        # 循环以获得作品的名称、作者、tag和时间
-            for item in work_items:
-                div_header = item.find("div", class_="header module")
-                header_module = div_header.find("h4", class_="heading")
-                #获取标题
-                title_tag = header_module.find("a")
-                name = title_tag.get_text(strip=True)
-                name_url = self.base_url + title_tag["href"]
-                #获取作者
-                author_tag = header_module.find("a", rel="author")
-                author = author_tag.get_text(strip=True)
-                author_url = self.base_url + author_tag["href"]
-                tags = []
-                ul_tags = item.find("ul", class_="tags commas")#class_防止和类的定义混淆
-                for li in ul_tags.find_all("li"):
-                    a_tag = li.find("a",class_ = "tag")
-                    if a_tag:
-                        tag_text = a_tag.get_text(strip=True)
-                        tag_url = self.base_url + a_tag["href"]
-                        tag_piece = {"text": tag_text, "url": tag_url}
-                        tags.append(tag_piece)
-                work_info = {
-                    "title":{"text":name,"url":name_url},
-                    "author":{"text":author,"url":author_url},
-                    "tags":tags
-                }
-                self.results.append(work_info)
-                break
-        return self.results
+    def _parse_search_results(self, html):#okay我们可以记住这个表达
+        soup = BeautifulSoup(html, "lxml")
+    # 获取该页码所有作品的列表    
+        work_items = soup.select("li.work.blurb.group")
+    # 循环以获得作品的名称、作者、tag和时间
+        for item in work_items:
+            div_header = item.find("div", class_="header module")
+            header_module = div_header.find("h4", class_="heading")
+            #获取标题
+            links = header_module.find_all("a")
+            print(links)
+            title_tag = links[0]
+            name = title_tag.get_text(strip=True)
+            name_url = self.base_url + title_tag["href"]
+            #获取作者
+            author_tag = links[1] if len(links) > 1 else None
+            author = author_tag.get_text(strip=True) if author_tag else "Anonymous"
+            author_url = self.base_url + author_tag["href"] if author_tag else None
+            tags = []
+            ul_tags = item.find("ul", class_="tags commas")#class_防止和类的定义混淆
+            for li in ul_tags.find_all("li"):
+                a_tag = li.find("a",class_ = "tag")
+                if a_tag:
+                    tag_text = a_tag.get_text(strip=True)
+                    tag_url = self.base_url + a_tag["href"]
+                    tag_piece = {"text": tag_text, "url": tag_url}
+                    tags.append(tag_piece)
+            work_info = {
+                "title":{"text":name,"url":name_url},
+                "author":{"text":author,"url":author_url},
+                "tags":tags
+            }
+            print(work_info)
+            self.results.append(work_info)
+        return True
     
 def main():
 
@@ -83,22 +81,19 @@ def main():
         html = page.content()#获取对应网页渲染后的HTML
         #得到最大页数
         scraper.max_num = scraper.get_all_pages(html)
-        html_list = []
         for i in range(1, scraper.max_num+1):
             search_url = (
             f"{scraper.base_url}/works/search?page={i}"
             f"&work_search%5Bquery%5D={encoded_query}"
         )
-            try:
-                page.goto(search_url, wait_until = "domcontentloaded",timeout=60000)
-                html_value = page.content()
-                html_list.append(html_value)
-            except Exception as e:
-                print(f"Page {i} failed.")
-            break
-        scraper._parse_search_results(html_list)
-    print(scraper.results)
-
+            page.goto(search_url, wait_until = "domcontentloaded",timeout=150000)
+            html_value = page.content()
+            print(html_value)
+            scraper._parse_search_results(html_value)
+            if i % 20 == 0:
+                page.close()
+                page = context.new_page()
+    return True
 if __name__ == "__main__":
     main()
         
