@@ -33,7 +33,6 @@ class AO3Scraper:
             header_module = div_header.find("h4", class_="heading")
             #获取标题
             links = header_module.find_all("a")
-            print(links)
             title_tag = links[0]
             name = title_tag.get_text(strip=True)
             name_url = self.base_url + title_tag["href"]
@@ -55,7 +54,6 @@ class AO3Scraper:
                 "author":{"text":author,"url":author_url},
                 "tags":tags
             }
-            print(work_info)
             self.results.append(work_info)
         return True
     
@@ -93,6 +91,7 @@ def main():
             if i % 20 == 0:
                 page.close()
                 page = context.new_page()
+    print(scraper.results)
     return True
 if __name__ == "__main__":
     main()
