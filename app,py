@@ -1,0 +1,8 @@
+from fastapi import FastAPI, HTTPException
+from item_scraper import AO3Scraper
+
+# 创建实例
+app = FastAPI(title = "", description = "")
+
+# 装饰器调用同目录下其他代码文件
+@app.get("item_scraper")
