@@ -2,7 +2,7 @@ from bs4 import BeautifulSoup
 from item_scraper import AO3Scraper
 import requests
 
-scraper = AO3Scraper()
+ao3_scraper = AO3Scraper()
 # 抓取时选择距离li标签最近的那个div
 class AuthorScraper:
     def __init__(self):
@@ -23,10 +23,10 @@ class AuthorScraper:
                 header_module = div_header.find("h4", class_="heading")
                 title = header_module.find("a", href = True)
                 title_name = title.get_text(strip = True)
-                title_url = scraper.base_url + title["href"]
+                title_url = ao3_scraper.base_url + title["href"]
                 self.work_list[title_name] = title_url
         return True
     
 if __name__ == "main":
-    scraper = AuthorScraper()
-    scraper.get_work_list()
+    author_scraper = AuthorScraper()
+    author_scraper.get_work_list()
