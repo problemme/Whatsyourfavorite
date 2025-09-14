@@ -57,42 +57,42 @@ class AO3Scraper:
             self.results.append(work_info)
         return True
     
-def main():
+    def html_conn(self, query):
 
-    #用户输入产品名称
-    query = input("Whatsyourfavorite:")
-    encoded_query = quote(query)
-    #从我的账户进行爬取
-    scraper = AO3Scraper()
-    url = f"https://archiveofourown.org/works/search?work_search%5Bquery%5D={encoded_query}"#搜索目标网址
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)#加载谷歌浏览器
-        context = browser.new_context()#类似于点击新建标签页
-        context.add_cookies([{
-            "name": "_otwarchive_session",   # AO3 的 cookie 名
-            "value": "eyJfcmFpbHMiOnsibWVzc2FnZSI6ImV5SnpaWE56YVc5dVgybGtJam9pTXpFek5tWmxaakZrTm1GbU9ERTNabUV4TW1aaVpqZzRPVEJqTTJVeE56RWlMQ0ozWVhKa1pXNHVkWE5sY2k1MWMyVnlMbXRsZVNJNlcxc3lNelV6TmpneE0xMHNJaVF5WVNReE5DUkJaekYxUlRKTE1HbHpVVUUxZGxKTVEyMXhPRGRsSWwwc0luSmxkSFZ5Ymw5MGJ5STZJaTkxYzJWeWN5OVVhR1ZrYjNOcFlTSXNJbDlqYzNKbVgzUnZhMlZ1SWpvaWVuUk5iRGw2TlY5YWJESXpOWFI1YmtWcmExazRhM0EzYjBwalVteFJSV2xKTXpVeE5GQmhYMGxLY3lKOSIsImV4cCI6IjIwMjUtMDgtMjNUMDU6MzM6MzguMzgxWiIsInB1ciI6ImNvb2tpZS5fb3R3YXJjaGl2ZV9zZXNzaW9uIn19--2d22e0e5ce95447bc994873910afb3f652597617", 
-            "domain": "archiveofourown.org",#写搜索网站的裸域名
-            "path": "/"
-        }])
-        page = context.new_page()#打开了一页新的谷歌浏览页
-        page.goto(url,wait_until = "domcontentloaded",timeout=60000)#跳转到搜索后的页面
-        html = page.content()#获取对应网页渲染后的HTML
-        #得到最大页数
-        scraper.max_num = scraper.get_all_pages(html)
-        for i in range(1, scraper.max_num+1):
-            search_url = (
-            f"{scraper.base_url}/works/search?page={i}"
-            f"&work_search%5Bquery%5D={encoded_query}"
-        )
-            page.goto(search_url, wait_until = "domcontentloaded",timeout=150000)
-            html_value = page.content()
-            print(html_value)
-            scraper._parse_search_results(html_value)
-            if i % 20 == 0:
-                page.close()
-                page = context.new_page()
-    print(scraper.results)
-    return True
+        #用户输入产品名称
+        encoded_query = quote(query)
+        #从我的账户进行爬取
+        url = f"https://archiveofourown.org/works/search?work_search%5Bquery%5D={encoded_query}"#搜索目标网址
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)#加载谷歌浏览器
+            context = browser.new_context()#类似于点击新建标签页
+            context.add_cookies([{
+                "name": "_otwarchive_session",   # AO3 的 cookie 名
+                "value": "eyJfcmFpbHMiOnsibWVzc2FnZSI6ImV5SnpaWE56YVc5dVgybGtJam9pTXpFek5tWmxaakZrTm1GbU9ERTNabUV4TW1aaVpqZzRPVEJqTTJVeE56RWlMQ0ozWVhKa1pXNHVkWE5sY2k1MWMyVnlMbXRsZVNJNlcxc3lNelV6TmpneE0xMHNJaVF5WVNReE5DUkJaekYxUlRKTE1HbHpVVUUxZGxKTVEyMXhPRGRsSWwwc0luSmxkSFZ5Ymw5MGJ5STZJaTkxYzJWeWN5OVVhR1ZrYjNOcFlTSXNJbDlqYzNKbVgzUnZhMlZ1SWpvaWVuUk5iRGw2TlY5YWJESXpOWFI1YmtWcmExazRhM0EzYjBwalVteFJSV2xKTXpVeE5GQmhYMGxLY3lKOSIsImV4cCI6IjIwMjUtMDgtMjNUMDU6MzM6MzguMzgxWiIsInB1ciI6ImNvb2tpZS5fb3R3YXJjaGl2ZV9zZXNzaW9uIn19--2d22e0e5ce95447bc994873910afb3f652597617", 
+                "domain": "archiveofourown.org",#写搜索网站的裸域名
+                "path": "/"
+            }])
+            page = context.new_page()#打开了一页新的谷歌浏览页
+            page.goto(url,wait_until = "domcontentloaded",timeout=150000)#跳转到搜索后的页面
+            html = page.content()#获取对应网页渲染后的HTML
+            #得到最大页数
+            self.max_num = self.get_all_pages(html)
+            for i in range(1, self.max_num+1):
+                search_url = (
+                f"{self.base_url}/works/search?page={i}"
+                f"&work_search%5Bquery%5D={encoded_query}"
+            )
+                page.goto(search_url, wait_until = "domcontentloaded",timeout=150000)
+                html_value = page.content()
+                self._parse_search_results(html_value)
+                if i % 20 == 0:
+                    page.close()
+                    page = context.new_page()
+        print(self.results)
+        return True
+
 if __name__ == "__main__":
-    main()
+    query = ""
+    scraper = AO3Scraper()
+    scraper.html_conn(query)
         
