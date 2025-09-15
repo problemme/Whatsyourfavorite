@@ -15,8 +15,7 @@ def search(query:str):
 def author(url: str):
     scraper = AuthorScraper()
     scraper.get_work_list(url)
-    print(scraper.work_list)
-    return True
+    return scraper.work_list
 
 # 仅供点击tag链接跳转
 @app.get("/tags")
