@@ -1,6 +1,7 @@
 from item_scraper import AO3Scraper
 from playwright.sync_api import sync_playwright
 from bs4 import BeautifulSoup
+from urllib.parse import urlparse
 
 ao3_scraper = AO3Scraper()
 class TagScraper():
@@ -8,20 +9,23 @@ class TagScraper():
         self.base_url = "https://archiveofourown.org"
         self.tag_search_result = []
         return True
-    def get_tag_list(self, url):
-        with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)#加载谷歌浏览器
-            context = browser.new_context()#类似于点击新建标签页
-            context.add_cookies([{
-                "name": "_otwarchive_session",   # AO3 的 cookie 名
-                "value": "eyJfcmFpbHMiOnsibWVzc2FnZSI6ImV5SnpaWE56YVc5dVgybGtJam9pTXpFek5tWmxaakZrTm1GbU9ERTNabUV4TW1aaVpqZzRPVEJqTTJVeE56RWlMQ0ozWVhKa1pXNHVkWE5sY2k1MWMyVnlMbXRsZVNJNlcxc3lNelV6TmpneE0xMHNJaVF5WVNReE5DUkJaekYxUlRKTE1HbHpVVUUxZGxKTVEyMXhPRGRsSWwwc0luSmxkSFZ5Ymw5MGJ5STZJaTkxYzJWeWN5OVVhR1ZrYjNOcFlTSXNJbDlqYzNKbVgzUnZhMlZ1SWpvaWVuUk5iRGw2TlY5YWJESXpOWFI1YmtWcmExazRhM0EzYjBwalVteFJSV2xKTXpVeE5GQmhYMGxLY3lKOSIsImV4cCI6IjIwMjUtMDgtMjNUMDU6MzM6MzguMzgxWiIsInB1ciI6ImNvb2tpZS5fb3R3YXJjaGl2ZV9zZXNzaW9uIn19--2d22e0e5ce95447bc994873910afb3f652597617", 
-                "domain": "archiveofourown.org",#写搜索网站的裸域名
-                "path": "/"
-            }])
-            page = context.new_page()#打开了一页新的谷歌浏览页
-            page.goto(url,wait_until = "domcontentloaded",timeout=150000)#跳转到搜索后的页面
-            html = page.content()#获取对应网页渲染后的HTML
-            soup = BeautifulSoup(html, "lxml")
+    
+    def get_all_pages(self,html):
+        soup = BeautifulSoup(html, "lxml")
+        #找到索引
+        pagination = soup.select_one("ol.pagination")#这是CSS选择器的写法
+        pages = []
+        for li in pagination.find_all("a"):
+            text = li.get_text(strip=True)
+            try:
+                pages.append(int(text))
+            except ValueError:
+                continue
+        self.max_num = max(pages) if pages else 1        
+        return self.max_num
+    
+    def _parse_search_results(self, html):#okay我们可以记住这个表达
+        soup = BeautifulSoup(html, "lxml")
     # 获取该页码所有作品的列表    
         work_items = soup.select("li.work.blurb.group")
     # 循环以获得作品的名称、作者、tag和时间
@@ -52,9 +56,34 @@ class TagScraper():
                 "tags":tags
             }
             self.tag_search_result.append(work_info)
-        return self.tag_search_result
+        return True
     
-if __name__ =="main":
-
-    tag_scraper = TagScraper()
-    tag_scraper.get_tag_list(url = "")
+    def get_tag_list(self, url):
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)#加载谷歌浏览器
+            context = browser.new_context()#类似于点击新建标签页
+            context.add_cookies([{
+                "name": "_otwarchive_session",   # AO3 的 cookie 名
+                "value": "eyJfcmFpbHMiOnsibWVzc2FnZSI6ImV5SnpaWE56YVc5dVgybGtJam9pTXpFek5tWmxaakZrTm1GbU9ERTNabUV4TW1aaVpqZzRPVEJqTTJVeE56RWlMQ0ozWVhKa1pXNHVkWE5sY2k1MWMyVnlMbXRsZVNJNlcxc3lNelV6TmpneE0xMHNJaVF5WVNReE5DUkJaekYxUlRKTE1HbHpVVUUxZGxKTVEyMXhPRGRsSWwwc0luSmxkSFZ5Ymw5MGJ5STZJaTkxYzJWeWN5OVVhR1ZrYjNOcFlTSXNJbDlqYzNKbVgzUnZhMlZ1SWpvaWVuUk5iRGw2TlY5YWJESXpOWFI1YmtWcmExazRhM0EzYjBwalVteFJSV2xKTXpVeE5GQmhYMGxLY3lKOSIsImV4cCI6IjIwMjUtMDgtMjNUMDU6MzM6MzguMzgxWiIsInB1ciI6ImNvb2tpZS5fb3R3YXJjaGl2ZV9zZXNzaW9uIn19--2d22e0e5ce95447bc994873910afb3f652597617", 
+                "domain": "archiveofourown.org",#写搜索网站的裸域名
+                "path": "/"
+            }])
+            page = context.new_page()#打开了一页新的谷歌浏览页
+            page.goto(url,wait_until = "domcontentloaded",timeout=150000)#跳转到搜索后的页面
+            html = page.content()#获取对应网页渲染后的HTML
+            #得到最大页数
+            self.max_num = self.get_all_pages(html)
+            # 解析得到编码后的tag文本
+            path = urlparse(url).path
+            encoded_tag = path.split('/')[2]
+            for i in range(1, self.max_num+1):
+                search_url = (
+                f"{self.base_url}/tags/{encoded_tag}/works?page={i}"
+            )
+                page.goto(search_url, wait_until = "domcontentloaded",timeout=150000)
+                html_value = page.content()
+                self._parse_search_results(html_value)
+                if i % 20 == 0:
+                    page.close()
+                    page = context.new_page()
+        return self.tag_search_result
