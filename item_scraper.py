@@ -89,10 +89,6 @@ class AO3Scraper:
                     page.close()
                     page = context.new_page()
         print(self.results)
-        return True
+        return self.results
 
-if __name__ == "__main__":
-    query = ""
-    scraper = AO3Scraper()
-    scraper.html_conn(query)
         
