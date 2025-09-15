@@ -33,7 +33,4 @@ class AuthorScraper:
             title_url = "https://archiveofourown.org" + title["href"]
             self.work_list[title_name] = title_url
         return self.work_list
-    
-if __name__ == "main":
-    author_scraper = AuthorScraper()
-    author_scraper.get_work_list(url="")
+
