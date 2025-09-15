@@ -1,0 +1,89 @@
+import React, { useState } from "react";
+
+export default function AO3Search() {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const handleSearch = async () => {
+    if (!query.trim()) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`http://localhost:8000/search?q=${encodeURIComponent(query)}`);
+      const data = await res.json();
+      setResults(data);
+    } catch (err) {
+      console.error("搜索失败:", err);
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-100 flex flex-col items-center p-6">
+      <div className="w-full max-w-2xl bg-white rounded-2xl shadow-lg p-4">
+        {/* 输入框 */}
+        <div className="flex items-center gap-2 border rounded-xl p-2">
+          <input
+            type="text"
+            value={query}
+            placeholder="输入要搜索的关键词..."
+            onChange={(e) => setQuery(e.target.value)}
+            className="flex-grow p-2 outline-none text-gray-700"
+          />
+          <button
+            onClick={handleSearch}
+            className="bg-green-500 text-white px-4 py-2 rounded-xl hover:bg-green-600"
+          >
+            搜索
+          </button>
+        </div>
+
+        {/* 加载中 */}
+        {loading && <p className="mt-4 text-gray-500">正在搜索...</p>}
+
+        {/* 结果展示 */}
+        <div className="mt-6 space-y-4">
+          {results.map((item, index) => (
+            <div
+              key={index}
+              className="border rounded-xl p-4 shadow-sm bg-gray-50 hover:bg-gray-100"
+            >
+              <h2 className="text-lg font-bold text-green-600">
+                <a href={item.title.url} target="_blank" rel="noreferrer">
+                  {item.title.text}
+                </a>
+              </h2>
+              <p className="text-sm text-gray-700 mt-1">
+                作者：{" "}
+                <a
+                  href={item.author.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-blue-500"
+                >
+                  {item.author.text}
+                </a>
+              </p>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {item.tags.map((tag, i) => (
+                  <a
+                    key={i}
+                    href={tag.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs bg-gray-200 px-2 py-1 rounded-lg hover:bg-gray-300"
+                  >
+                    #{tag.text}
+                  </a>
+                ))}
+              </div>
+            </div>
+          ))}
+          {!loading && results.length === 0 && (
+            <p className="text-gray-500">没有找到相关结果。</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
