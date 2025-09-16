@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Chat Example</title>
+  <!-- 引入 Vue 3 CDN -->
+  <script src="https://unpkg.com/vue@3"></script>
+</head>
+<body>
+  <div id="app" class="chat-container">
+    <div v-for="item in results" :key="item.title.text">
+      <a :href="item.title.url" target="_blank">{{ item.title.text }}</a>
+      <span>by</span>
+      <a :href="item.author.url" target="_blank">{{ item.author.text }}</a>
+      <div class="tags">
+        <a v-for="t in item.tags" :key="t.text" :href="t.url" target="_blank">
+          {{ t.text }}
+        </a>
+      </div>
+    </div>
+    <input v-model="userInput" @keyup.enter="sendQuery" placeholder="Whatsyourfavorite">
+  </div>
+
+  <script>
+    const { createApp, ref, onMounted } = Vue
+    createApp({
+      setup() {
+        const userInput = ref('')
+        const results = ref([])
+        let socket
+        onMounted(() => {
+          socket = new WebSocket('ws://localhost:8000/ws')
+          socket.onmessage = (e) => {
+            const msg = JSON.parse(e.data)
+            if (msg.type === 'result') results.value = msg.data
+          }
+        })
+        function sendQuery() {
+          socket.send(JSON.stringify({ type: 'search', query: userInput.value }))
+        }
+        return { userInput, results, sendQuery }
+      }
+    }).mount('#app')
+  </script>
+</body>
+</html>
