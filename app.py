@@ -3,6 +3,8 @@ from item_scraper import AO3Scraper
 from user_scraper import AuthorScraper
 from tag_scraper import TagScraper
 from text_scraper import TextScraper
+import json
+from fastapi import WebSocket
 # 创建实例
 app = FastAPI()
 # 装饰器表明一旦有人访问http://服务器地址：端口/serach时执行装饰器下的函数
