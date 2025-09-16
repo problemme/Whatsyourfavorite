@@ -1,11 +1,9 @@
-from fastapi import FastAPI, WebSocket
-import json
+from fastapi import FastAPI, Query
 from item_scraper import AO3Scraper
 from user_scraper import AuthorScraper
 from tag_scraper import TagScraper
 from text_scraper import TextScraper
-
-# 基于REST API创建实例
+# 创建实例
 app = FastAPI()
 # 装饰器表明一旦有人访问http://服务器地址：端口/serach时执行装饰器下的函数
 @app.get("/search")
@@ -14,23 +12,30 @@ def search(query:str):
     return scraper.html_conn(query)
 
 @app.get("/users")
-def author(url: str):
+def author(url: str  = Query(..., description = "作者主页完整链接")):
     scraper = AuthorScraper()
     scraper.get_work_list(url)
     return scraper.work_list
 
 # 仅供点击tag链接跳转
 @app.get("/tags")
-def tag(url: str):
+def tag(url: str = Query(...,description="作品tag完整链接")):
     scraper = TagScraper()
     scraper.get_tag_list(url)
     return scraper.tag_search_result
 
 @app.get("/works")
-def text(url: str):
+def text(url: str = Query(..., description="作品正文完整链接")):
     scraper = TextScraper()
     scraper.get_text_list(url)
     return scraper.full_text_list
+
+if __name__ == "__main__":
+    #c 此为异步服务器网关接口
+    import uvicorn
+    # app指上面创建的实例，host是主机代码，可以决定谁能访问我的网页，port是端口号、即别人访问时的代码
+    uvicorn.run(app, host="", port = 8000)
+
 # 配置跨域访问
 from fastapi.middleware.cors import CORSMiddleware
 app.add_middleware(
