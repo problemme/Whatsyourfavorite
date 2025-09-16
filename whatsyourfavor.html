@@ -1,89 +1,49 @@
-import React, { useState } from "react";
-
-export default function AO3Search() {
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState([]);
-  const [loading, setLoading] = useState(false);
-
-  const handleSearch = async () => {
-    if (!query.trim()) return;
-    setLoading(true);
-    try {
-      const res = await fetch(`http://localhost:8000/search?q=${encodeURIComponent(query)}`);
-      const data = await res.json();
-      setResults(data);
-    } catch (err) {
-      console.error("搜索失败:", err);
-    }
-    setLoading(false);
-  };
-
-  return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center p-6">
-      <div className="w-full max-w-2xl bg-white rounded-2xl shadow-lg p-4">
-        {/* 输入框 */}
-        <div className="flex items-center gap-2 border rounded-xl p-2">
-          <input
-            type="text"
-            value={query}
-            placeholder="输入要搜索的关键词..."
-            onChange={(e) => setQuery(e.target.value)}
-            className="flex-grow p-2 outline-none text-gray-700"
-          />
-          <button
-            onClick={handleSearch}
-            className="bg-green-500 text-white px-4 py-2 rounded-xl hover:bg-green-600"
-          >
-            搜索
-          </button>
-        </div>
-
-        {/* 加载中 */}
-        {loading && <p className="mt-4 text-gray-500">正在搜索...</p>}
-
-        {/* 结果展示 */}
-        <div className="mt-6 space-y-4">
-          {results.map((item, index) => (
-            <div
-              key={index}
-              className="border rounded-xl p-4 shadow-sm bg-gray-50 hover:bg-gray-100"
-            >
-              <h2 className="text-lg font-bold text-green-600">
-                <a href={item.title.url} target="_blank" rel="noreferrer">
-                  {item.title.text}
-                </a>
-              </h2>
-              <p className="text-sm text-gray-700 mt-1">
-                作者：{" "}
-                <a
-                  href={item.author.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-blue-500"
-                >
-                  {item.author.text}
-                </a>
-              </p>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {item.tags.map((tag, i) => (
-                  <a
-                    key={i}
-                    href={tag.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-xs bg-gray-200 px-2 py-1 rounded-lg hover:bg-gray-300"
-                  >
-                    #{tag.text}
-                  </a>
-                ))}
-              </div>
-            </div>
-          ))}
-          {!loading && results.length === 0 && (
-            <p className="text-gray-500">没有找到相关结果。</p>
-          )}
-        </div>
+<template>
+  <!--给div标签(最外层容器)加上选择器--> 
+  <div class="chat-container">
+    <!--vue指令遍历results字典列表,每个元素都有自己的区域;:key负责给这个元素增加标识--> 
+    <div v-for="item in results" :key="item.title.text">
+      <!--超链接标签,用户点击后跳转到results字典元素中的作品链接--> 
+      <a :href="item.title.url" target="_blank">{{ item.title.text }}</a>
+      <!--文本标签，显示"by"--> 
+      <span>by</span>
+      <!--href后跟链接,{{}}表示文本--> 
+      <a :href="item.author.url" target="_blank">{{ item.author.text }}</a>
+      <!--作品标签区域--> 
+      <div class="tags">
+        <a v-for="t in item.tags" :key="t.text" :href="t.url" target="_blank">
+        {{ t.text }}
+        </a>
       </div>
     </div>
-  );
+    <!--v-model用于双向绑定,输入框的值与userinput同步:--> 
+    <!-- @keyup.enter表示按下回车键时触发sendQuery方法-->
+    <input v-model="userInput" @keyup.enter="sendQuery" placeholder="Whatsyourfavorite"/>
+  </div>
+</template>
+
+<script setup>
+  // ref用来自动更新视图变量，onMounted表示组件挂载完成后执行
+import { ref, onMounted } from 'vue'
+// const定义的变量不会改变，但如果是ref或对象则可以改变
+const userInput = ref('')
+// 保存爬取函数返回的数据列表
+const results = ref([])
+// let声明的变量可以被重新赋值，这里存放了websocket实例
+let socket
+
+// vue首次渲染完成时执行
+onMounted(() => {
+  socket = new WebSocket('ws://localhost:8000/ws')
+  socket.onmessage = (e) => {
+    // 监听后端消息
+    const msg = JSON.parse(e.data)
+    if (msg.type === 'result') results.value = msg.data
+  }
+})
+
+function sendQuery() {
+  // 将用户输入的消息格式化后发送到后端
+  socket.send(JSON.stringify({ type: 'search', query: userInput.value }))
 }
+</script>
