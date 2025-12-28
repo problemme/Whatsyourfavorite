@@ -1,7 +1,17 @@
 # Whatsyourfavorite
-为无法科学上网的同人女提供最新最美味的中文版Fanfics（我调用了Google翻译，这让文章变得通俗易懂）
-我产品（这回真的是我产品）：简洁————当点进网页、您只需要搜索想看的配对、搜索结果会以“最新”和“最热”呈现；美妙————即便拥有镜像网站也很难找到靠谱翻译？这里调用Google翻译的API，您可以看到最贴近作品灵魂的翻译；
-写着写着感觉看到了五年前躲着高中重重课业仍坚持用彩云翻译看同人小说的自己，请燥候！
+This project is built for fandom girls who don’t have reliable access to the global internet, yet still want to read the latest and most satisfying Chinese fanfictions.
+
+To make this possible, I integrated Google Translate into the platform. The goal is not just “translation,” but readability — turning raw machine output into something smooth, approachable, and emotionally faithful to the original text.
+
+This time, it really is my product.
+
+The design philosophy is simple and intentional:
+
+Simple — When you open the website, you only need to search for the pairing you care about. Results are displayed clearly by latest and most popular, no unnecessary steps.
+
+Delightful — Even with mirror sites, it’s hard to find translations you can truly trust. By calling Google Translate’s API, this project aims to provide translations that stay as close as possible to the soul of the original work.
+
+While writing this README, I kept seeing a version of myself from five years ago — hiding between overwhelming high school assignments, stubbornly relying on Caiyun Translate just to keep reading fanfiction. That experience never really left me, and this project is, in many ways, a response to it.
 
 如今我换到了一个新电脑Mac——需要重新安装python包：
 回到根目录用homebrew装（
