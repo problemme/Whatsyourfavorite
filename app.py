@@ -14,7 +14,7 @@ def search(query:str):
     return scraper.html_conn(query)
 
 @app.get("/users")
-def author(url: str  = Query(..., description = "作者主页完整链接")):
+def author(url: str = Query(..., description = "作者主页完整链接")):
     scraper = AuthorScraper()
     scraper.get_work_list(url)
     return scraper.work_list
@@ -33,7 +33,7 @@ def text(url: str = Query(..., description="作品正文完整链接")):
     return scraper.full_text_list
 
 if __name__ == "__main__":
-    #c 此为异步服务器网关接口
+    # 此为异步服务器网关接口
     import uvicorn
     # app指上面创建的实例，host是主机代码，可以决定谁能访问我的网页，port是端口号、即别人访问时的代码
     uvicorn.run(app, host="", port = 8000)
@@ -42,10 +42,10 @@ if __name__ == "__main__":
 from fastapi.middleware.cors import CORSMiddleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # 允许哪些域名访问该网站API
-    allow_credentials=True, # 登录API是否需要cookie
-    allow_methods=["*"], # 允许哪些HTTP方法
-    allow_headers=["*"], # 允许哪些请求头
+    allow_origins = ["*"], # 允许哪些域名访问该网站API
+    allow_credentials = False, # 登录API不需要cookie
+    allow_methods = ["*"], # 允许哪些HTTP方法
+    allow_headers = ["*"], # 允许哪些请求头
 )
 @app.websocket("/ws")
 async def websocket_search(websocket: WebSocket):
@@ -63,24 +63,26 @@ async def websocket_search(websocket: WebSocket):
             message = json.loads(data)
             # 区分用户操作
             msg_type = message.get("type")
+            # 用户在搜索框搜索
             if msg_type == "search":
                 result = ao3_scraper.html_conn(message["query"])
                 # 等待后端返回数据到前端（并保证它成功）
                 await websocket.send_json({"type": "search_result", "data": result})
+            # 用户点击作者链接 
             elif msg_type == "author":
                 author_scraper.get_work_list(message["url"])
-                await websocket.send_json({"type": "author_result", "data": scraper.work_list})
-
+                await websocket.send_json({"type": "author_result", "data": ao3_scraper.work_list})
+            # 用户点击tag链接
             elif msg_type == "tag":
                 tag_scraper.get_tag_list(message["url"])
-                await websocket.send_json({"type": "tag_result", "data": scraper.tag_search_result})
-
+                await websocket.send_json({"type": "tag_result", "data": ao3_scraper.tag_search_result})
+            # 用户点击正文
             elif msg_type == "text":
                 text_scraper.get_text_list(message["url"])
-                await websocket.send_json({"type": "text_result", "data": scraper.full_text_list})
+                await websocket.send_json({"type": "text_result", "data": ao3_scraper.full_text_list})
 
             else:
-                await websocket.send_json({"error": "未知的请求类型"})
+                await websocket.send_json({"type": "error", "message": "未知的请求类型"})
     except Exception as e:
         print("WebSocket关闭:", e)
     finally:
