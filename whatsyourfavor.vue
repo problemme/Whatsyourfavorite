@@ -21,7 +21,7 @@
 </template>
 
 <script setup>
-  // ref用来自动更新视图变量，onMounted表示组件挂载完成后执行
+  // ref用来更新爬取内容，onMounted表示组件挂载完成后执行
 import { ref, onMounted } from 'vue'
 // 
 const userInput = ref('')
@@ -40,7 +40,7 @@ onMounted(() => {
   }
 })
 function loadText(url){
-  socket.send(JSON.stringify({type: 'text', }))
+  socket.send(JSON.stringify({type: 'text', url}))
 }
 function sendQuery() {
   // 传信给后端

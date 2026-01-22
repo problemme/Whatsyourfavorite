@@ -71,16 +71,15 @@ async def websocket_search(websocket: WebSocket):
             # 用户点击作者链接 
             elif msg_type == "author":
                 author_scraper.get_work_list(message["url"])
-                await websocket.send_json({"type": "author_result", "data": ao3_scraper.work_list})
+                await websocket.send_json({"type": "author_result", "data": author_scraper.work_list})
             # 用户点击tag链接
             elif msg_type == "tag":
                 tag_scraper.get_tag_list(message["url"])
-                await websocket.send_json({"type": "tag_result", "data": ao3_scraper.tag_search_result})
+                await websocket.send_json({"type": "tag_result", "data": tag_scraper.tag_search_result})
             # 用户点击正文
             elif msg_type == "text":
                 text_scraper.get_text_list(message["url"])
-                await websocket.send_json({"type": "text_result", "data": ao3_scraper.full_text_list})
-
+                await websocket.send_json({"type": "text_result", "data": text_scraper.full_text_list})
             else:
                 await websocket.send_json({"type": "error", "message": "未知的请求类型"})
     except Exception as e:
