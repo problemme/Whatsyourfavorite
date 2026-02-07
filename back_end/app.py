@@ -32,12 +32,6 @@ def text(url: str = Query(..., description="作品正文完整链接")):
     scraper.get_text_list(url)
     return scraper.full_text_list
 
-if __name__ == "__main__":
-    # 此为异步服务器网关接口
-    import uvicorn
-    # app指上面创建的实例，host是主机代码，可以决定谁能访问我的网页，port是端口号、即别人访问时的代码
-    uvicorn.run(app, host="", port = 8000)
-
 # 配置跨域访问
 from fastapi.middleware.cors import CORSMiddleware
 app.add_middleware(
