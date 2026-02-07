@@ -1,6 +1,6 @@
 from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright
-from item_scraper import AO3Scraper
+from back_end.item_scraper import AO3Scraper
 import requests
 
 ao3_scraper = AO3Scraper()

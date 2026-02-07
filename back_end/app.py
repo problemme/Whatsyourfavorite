@@ -1,8 +1,8 @@
 from fastapi import FastAPI, Query
-from item_scraper import AO3Scraper
-from user_scraper import AuthorScraper
-from tag_scraper import TagScraper
-from text_scraper import TextScraper
+from back_end.item_scraper import AO3Scraper
+from back_end.user_scraper import AuthorScraper
+from back_end.tag_scraper import TagScraper
+from back_end.text_scraper import TextScraper
 import json
 from fastapi import WebSocket
 # 创建实例

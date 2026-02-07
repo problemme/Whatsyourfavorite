@@ -1,4 +1,4 @@
-from item_scraper import AO3Scraper
+from back_end.item_scraper import AO3Scraper
 from playwright.sync_api import sync_playwright
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
