@@ -12,3 +12,8 @@ Simple — When you open the website, you only need to search for the pairing yo
 Delightful — Even with mirror sites, it’s hard to find translations you can truly trust. By calling Google Translate’s API, this project aims to provide translations that stay as close as possible to the soul of the original work.
 
 While writing this README, I kept seeing a version of myself from five years ago — hiding between overwhelming high school assignments, stubbornly relying on Caiyun Translate just to keep reading fanfiction. That experience never really left me, and this project is, in many ways, a response to it.
+
+First time to launch: Set a venv——py -m venv venv
+Activate it : venv\Scripts\activate.bat
+Kill it: deactivate
+Install package: pip install -r requirements.txt
