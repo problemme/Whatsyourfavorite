@@ -1,8 +1,8 @@
 from fastapi import FastAPI, Query
-from back_end.item_scraper import AO3Scraper
-from back_end.user_scraper import AuthorScraper
-from back_end.tag_scraper import TagScraper
-from back_end.text_scraper import TextScraper
+from item_scraper import AO3Scraper
+from user_scraper import AuthorScraper
+from tag_scraper import TagScraper
+from text_scraper import TextScraper
 import json
 from fastapi import WebSocket
 # 创建实例
@@ -31,6 +31,10 @@ def text(url: str = Query(..., description="作品正文完整链接")):
     scraper = TextScraper()
     scraper.get_text_list(url)
     return scraper.full_text_list
+# 根路由，对开发者友好可以看到swagger文档
+@app.get("/")
+def root():
+    return {"status": "ok", "msg": "Backend is running"}
 
 # 配置跨域访问
 from fastapi.middleware.cors import CORSMiddleware

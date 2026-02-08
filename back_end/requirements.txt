@@ -4,3 +4,6 @@ websockets
 requests
 beautifulsoup4
 lxml
+playwright
+selenium
+requests

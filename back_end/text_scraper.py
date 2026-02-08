@@ -1,5 +1,4 @@
-
-from back_end.item_scraper import AO3Scraper
+from item_scraper import AO3Scraper
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.common.by import By
