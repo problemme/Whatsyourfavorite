@@ -10,5 +10,11 @@ eval "$(/opt/homebrew/bin/brew shellenv)"
 安装python包（
 brew install python
 ）
-配置虚拟环境并激活后，运行uvicorn app:app --reload --host 0.0.0.0 --port 8000
+配置虚拟环境并激活后（
+First time to launch: Set a venv——py -m venv venv
+Activate it : venv\Scripts\activate.bat
+Kill it: deactivate
+Install package: pip install -r requirements.txt
+）
 
+运行（uvicorn app:app --reload --host 0.0.0.0 --port 8000）
