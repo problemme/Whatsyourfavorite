@@ -5,13 +5,20 @@ from tag_scraper import TagScraper
 from text_scraper import TextScraper
 import json
 from fastapi import WebSocket
+from database import SessionLocal
+from crud import save_results
+
 # 创建实例
 app = FastAPI()
 # 装饰器表明一旦有人访问http://服务器地址：端口/serach时执行装饰器下的函数
 @app.get("/search")
 def search(query:str):
     scraper = AO3Scraper()
-    return scraper.html_conn(query)
+    results = scraper.html_conn(query)
+    db = SessionLocal()
+    save_results(db, results)
+
+    return results
 
 @app.get("/users")
 def author(url: str = Query(..., description = "作者主页完整链接")):
